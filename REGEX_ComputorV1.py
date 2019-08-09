@@ -9,16 +9,21 @@ if __name__ == '__main__':
             sys.exit(print('\nYou\'ll pay for that'))
 
         # Format must be "c + bx + ax² = "
-        pattern = re.compile(r'''   ([+,\-,=])?                 # The Sign if there's one
+        general_pattern = re.compile(r'''   ([+,\-,=])?                 # The Sign if there's one
                                     \s*                         # spaces
                                     (\d+.\d+|\d+)               # A number [float or not] that represent a, b or c
                                     \s*\*\s*[xX]\s*[\^]\s*      # spaces * spaces [x or X] spaces ^ spaces
                                     (\d)                        # A number
                                 ''', re.VERBOSE)
-        model = pattern.findall(in_put)
+        model = general_pattern.findall(in_put)
+        stars_pattern = re.compile(r'''\*''')
+        stars = len(stars_pattern.findall(in_put))
+        print(stars)
         error = ''
         equal = 0
-        if model:
+        if len(model) != stars:
+            print('Nuuuuuuuuuuuuuuuuuuupe')
+        elif model:
             print(model)
             for exp in model:
                 if '=' in exp:
