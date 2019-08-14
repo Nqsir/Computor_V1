@@ -54,14 +54,14 @@ if __name__ == '__main__':
             sys.exit(print('\nYou\'ll pay for that !'))
 
         # Format must be "c + bx + ax² = "
-        general_pattern = re.compile(r'''
+        global_pattern = re.compile(r'''
                                     ([\+, \-, \=])?         # Sign if there's one [+, -, =]
                                     \s*                     # Spaces
                                     (\d+.\d+|\d+)           # One or more number(s) (float or not) = variables
                                     \s*\*\s*[xX]\s*[\^]\s*  # spaces [*] spaces [x or X] spaces [^] spaces
-                                    (\d+\.\d+|\d+)           # One or more number(s) (float or not) = coefficients
+                                    (\d+\.\d+|\d+)          # One or more number(s) (float or not) = coefficients
                                     ''', re.VERBOSE)
-        global_model = general_pattern.findall(in_put)
+        global_model = global_pattern.findall(in_put)
         stars_pattern = re.compile(r'''\*''')
         stars_model = stars_pattern.findall(in_put)
 
@@ -72,7 +72,7 @@ if __name__ == '__main__':
             error = parser(global_model, stars_model)
             if error:
                 display_err[error]()
-                print('Teub !')
+                print('Nope !')
             # else:
             #     sys.exit(print('Thumbs up !'))
         else:
