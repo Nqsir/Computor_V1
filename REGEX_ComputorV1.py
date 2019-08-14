@@ -25,7 +25,7 @@ def parser(g_model, s_model):
     for exp in g_model:
         print(f'exp = {exp}')
         if '=' in exp:
-            equal = 1
+            equal += 1
         for s, e in enumerate(exp):
             if s == 2:
                 try:
@@ -37,7 +37,7 @@ def parser(g_model, s_model):
                     err = 'power'
             print(f'e = {e}')
 
-    if not equal:
+    if not equal or equal > 1:
         err = 'equal'
 
     if max_ and not err or err == 'degree':
@@ -53,21 +53,39 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             sys.exit(print('\nYou\'ll pay for that !'))
 
-        # Format must be "c + bx + ax² = "
-        global_pattern = re.compile(r'''
-                                    ([\+, \-, \=])?         # Sign if there's one [+, -, =]
-                                    \s*                     # Spaces
-                                    (\d+.\d+|\d+)           # One or more number(s) (float or not) = variables
-                                    \s*\*\s*[xX]\s*[\^]\s*  # spaces [*] spaces [x or X] spaces [^] spaces
-                                    (\d+\.\d+|\d+)          # One or more number(s) (float or not) = coefficients
-                                    ''', re.VERBOSE)
-        global_model = global_pattern.findall(in_put)
-        stars_pattern = re.compile(r'''\*''')
-        stars_model = stars_pattern.findall(in_put)
+        # Format must be "c*x^0 + b*x^1 + a*x^2 = "
+        global_model = re.findall(r'''
+                                      ([\+\-\=])?                  # Sign if there's one and equal
+                                      \s*                          # Spaces
+                                      (\d+.\d+|\d+)                # One or more number(s) (float or not) = variables
+                                      \s*\*\s*[xX]\s*[\^]\s*       # spaces '*' spaces 'x' or 'X' spaces '^' spaces
+                                      (\d+\.\d+|\d+)               # One or more number(s) (float or not) = coefficients
+                                    ''', in_put, re.VERBOSE)
+        # First try, need to perform more tests => Check for ' " ' at start and end (regex or not ?)
+        wrong_pattern = re.findall(r'''
+                                       [^0-9\+\-\=\. *^xX]         # Catch wrong char
+                                       |
+                                       [\-]\s*[^\d ]\s*            # Delimit the usage of '-' (only figures)
+                                       |
+                                       [\+]\s*?[^\d xX]\s*         # Delimit the usage of '+' (figures and xX)
+                                       |
+                                       [\=]\s*[^\d \+\-xX]\s*      # Delimit the usage of '=' (figures, xX, signs)
+                                       |
+                                       [\*]\s*[^\d \+\-xX]\s*      # Delimit the usage of '*' (figures, xX, signs)
+                                       |
+                                       [xX]\s*[^\^ \+\-\=]\s       # Delimit the usage of 'xX' (pow, signs, equal)
+                                       |
+                                       [\^]\s*[^ \d]\s*            # Delimit the usage of '^' (only figures)
+                                       |
+                                       [\.][^\d]                   # Delimit the usage of '.' (catches '..')
+                                       |
+                                       \d*\.\d+\.\d+               # Delimit the usage of '.' (catches '1.1.1')
+                                    ''', in_put, re.VERBOSE)
+        stars_model = re.findall(r'''\*''', in_put)
 
         display_err = def_errors_dict()
 
-        if global_model:
+        if global_model and not wrong_pattern:
             print(global_model)
             error = parser(global_model, stars_model)
             if error:
