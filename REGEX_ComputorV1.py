@@ -1,46 +1,75 @@
 import sys
 import re
-from functools import partial
 
 
 # Need to reorganise according to err
 def def_errors_dict():
-    dictionary = {'equal': partial(print, f'No "equal" sign or problem with the following coefficient or variable,'
-                                          f' polynomial expression probably false'),
-                  'n_exp': partial(print, f'Problem with one or more coefficients / variables,'
-                                          f' polynomial expression probably false'),
-                  'deg>2': partial(print, f'Polynomial degree is strictly greater than 2, can\'t solve'),
-                  'power': partial(print, f'Powers must be integer, float detected')}
+    dictionary = {
+        'char': f'Unexpected char, polynomial expression probably false\n',
+        'minus': f'Wrong usage of minus (" - "), polynomial expression probably false\n',
+        'plus': f'Wrong usage of plus (" + "), polynomial expression probably false\n',
+        'equal': f'Wrong usage of equal (" = "), polynomial expression probably false\n',
+        'multiplier': f'Wrong usage of multiplier (" * "), polynomial expression probably false\n',
+        'xX': f'Wrong usage of " x " or " X ", polynomial expression probably false\n',
+        'power': f'Wrong usage of power (" ^ "), polynomial expression probably false\n',
+        'dot_1': f'Wrong usage of decimal (" . "), polynomial expression probably false\n',
+        'dot_2': f'Wrong usage of decimal(" . "), polynomial expression probably false\n',
+        'deg>2': f'Polynomial degree is strictly greater than 2, can\'t solve\n'}
+
     return dictionary
 
 
+def check_wrong_model(w_model):
+    err = ''
+    for wrong in w_model:
+        for n, model in enumerate(wrong):
+            if model:
+                if n == 0:
+                    err = 'char'
+                elif n == 1:
+                    err = 'minus'
+                elif n == 2:
+                    err = 'plus'
+                elif n == 3:
+                    err = 'equal'
+                elif n == 4:
+                    err = 'multiplier'
+                elif n == 5:
+                    err = 'xX'
+                elif n == 6:
+                    try:
+                        if int(wrong[7]) and int(wrong[7]) > 2:
+                            err = 'deg>2'
+                        else:
+                            err = 'power'
+                    except ValueError:
+                        err = 'power'
+                elif n == 8:
+                    err = 'dot_1'
+                elif n == 9:
+                    err = 'dot_2'
+
+        return err
+
+
 # Need to reorganise err
-def parser(g_model, s_model):
-    print(s_model)
+def parser(g_model):
     err = 0
     equal = 0
     max_ = 0
-    if len(g_model) != len(s_model):
-        err = 'n_exp'
     for exp in g_model:
         print(f'exp = {exp}')
         if '=' in exp:
             equal += 1
         for s, e in enumerate(exp):
             if s == 2:
-                try:
-                    if int(e) > max_:
-                        max_ = int(e)
-                    if int(e) > 2:
-                        err = 'deg>2'
-                except ValueError:
-                    err = 'power'
-            print(f'e = {e}')
+                if int(e) > max_:
+                    max_ = int(e)
 
     if not equal or equal > 1:
         err = 'equal'
 
-    if max_ and not err or err == 'degree':
+    if max_ and not err:
         print(f'Polynomial degree = {max_}')
 
     return err
@@ -53,6 +82,10 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             sys.exit(print('\nYou\'ll pay for that !'))
 
+        # Defines the error dictionary
+        error = ''
+        display_err = def_errors_dict()
+
         # Format must be "c*x^0 + b*x^1 + a*x^2 = "
         global_model = re.findall(r'''
                                       ([\+\-\=])?                  # Sign if there's one and equal
@@ -61,39 +94,38 @@ if __name__ == '__main__':
                                       \s*\*\s*[xX]\s*[\^]\s*       # spaces '*' spaces 'x' or 'X' spaces '^' spaces
                                       (\d+\.\d+|\d+)               # One or more number(s) (float or not) = coefficients
                                     ''', in_put, re.VERBOSE)
+
         # First try, need to perform more tests => Check for ' " ' at start and end (regex or not ?)
-        wrong_pattern = re.findall(r'''
-                                       [^0-9\+\-\=\. *^xX]         # Catch wrong char
+        wrong_model = re.findall(r'''
+                                       ([^0-9\+\-\=\. *^xX])         # Catch wrong char
                                        |
-                                       [\-]\s*[^\d ]\s*            # Delimit the usage of '-' (only figures)
+                                       ([\-]\s*[^\d ]\s*)            # Delimit the usage of '-' (only figures)
                                        |
-                                       [\+]\s*?[^\d xX]\s*         # Delimit the usage of '+' (figures and xX)
+                                       ([\+]\s*[^\d xX]\s*)          # Delimit the usage of '+' (figures and xX)
                                        |
-                                       [\=]\s*[^\d \+\-xX]\s*      # Delimit the usage of '=' (figures, xX, signs)
+                                       ([\=]\s*[^\d \+\-xX]\s*)      # Delimit the usage of '=' (figures, xX, signs)
                                        |
-                                       [\*]\s*[^\d \+\-xX]\s*      # Delimit the usage of '*' (figures, xX, signs)
+                                       ([\*]\s*[^\d \+\-xX]\s*)      # Delimit the usage of '*' (figures, xX, signs)
                                        |
-                                       [xX]\s*[^\^ \+\-\=]\s       # Delimit the usage of 'xX' (pow, signs, equal)
+                                       ([xX]\s*[^\^ \+\-\=]\s*)      # Delimit the usage of 'xX' (pow, signs, equal)
                                        |
-                                       [\^]\s*[^ \d]\s*            # Delimit the usage of '^' (only figures)
+                                       ([\^]\s*([^ 0-2])\s*)         # Delimit the usage of '^' (only figures)
                                        |
-                                       [\.][^\d]                   # Delimit the usage of '.' (catches '..')
+                                       ([\.][^\d])                   # Delimit the usage of '.' (catches '..')
                                        |
-                                       \d*\.\d+\.\d+               # Delimit the usage of '.' (catches '1.1.1')
+                                       (\d*\.\d+\.\d+)               # Delimit the usage of '.' (catches '1.1.1')
                                     ''', in_put, re.VERBOSE)
-        stars_model = re.findall(r'''\*''', in_put)
 
-        display_err = def_errors_dict()
+        if wrong_model:
+            error = check_wrong_model(wrong_model)
 
-        if global_model and not wrong_pattern:
+        elif global_model:
             print(global_model)
-            error = parser(global_model, stars_model)
-            if error:
-                display_err[error]()
-                print('Nope !')
-            # else:
-            #     sys.exit(print('Thumbs up !'))
+            error = parser(global_model)
         else:
             print(f'It\'s like it\'s not working between me and you...\n\n'
                   f'"{in_put}"\n\n'
                   f'Really ?\n')
+
+        if error:
+            print(display_err[error])
