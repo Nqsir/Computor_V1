@@ -19,11 +19,11 @@ def def_errors_dict():
     return dictionary
 
 
-def check_wrong_model(w_model):
+def check_wrong_pattern(pattern):
     err = ''
-    for wrong in w_model:
-        for n, model in enumerate(wrong):
-            if model:
+    for wrong in pattern:
+        for n, pat in enumerate(wrong):
+            if pat:
                 if n == 0:
                     err = 'char'
                 elif n == 1:
@@ -53,26 +53,38 @@ def check_wrong_model(w_model):
 
 
 # Need to reorganise err
-def parser(g_model):
-    err = 0
-    equal = 0
+def parser(pattern):
+    err = ''
     max_ = 0
-    for exp in g_model:
-        print(f'exp = {exp}')
+    equal = 0
+    for exp in pattern:
         if '=' in exp:
             equal += 1
-        for s, e in enumerate(exp):
-            if s == 2:
-                if int(e) > max_:
-                    max_ = int(e)
+        if int(exp[3]) > max_:
+            max_ = int(exp[3])
 
-    if not equal or equal > 1:
+    if not err and not pattern[-1][0] or equal > 1:
         err = 'equal'
 
     if max_ and not err:
         print(f'Polynomial degree = {max_}')
 
     return err
+
+
+# Complex reduction atm, need to rethink it
+def reducing_form(pattern):
+    res = []
+#     for n, pat in pattern:
+#         res.append(pat)
+#         if pat[3] == pattern[-1][3]:
+#             if pat[1] == '+' or not pat[1]:
+#                 if pattern[-1][1] == '+':
+#                     res[n][2] = abs(pat[2] - pattern[-1][2])
+#         if pat[0] is '=':
+#             break
+#
+    return res
 
 
 if __name__ == '__main__':
@@ -87,16 +99,16 @@ if __name__ == '__main__':
         display_err = def_errors_dict()
 
         # Format must be "c*x^0 + b*x^1 + a*x^2 = "
-        global_model = re.findall(r'''
-                                      ([\+\-\=])?                  # Sign if there's one and equal
-                                      \s*                          # Spaces
+        global_pattern = re.findall(r'''
+                                      (\=)?\s*                     # Equal if there's one
+                                      ([\+\-])?\s*                 # Sign if there's one
                                       (\d+.\d+|\d+)                # One or more number(s) (float or not) = variables
                                       \s*\*\s*[xX]\s*[\^]\s*       # spaces '*' spaces 'x' or 'X' spaces '^' spaces
                                       (\d+\.\d+|\d+)               # One or more number(s) (float or not) = coefficients
                                     ''', in_put, re.VERBOSE)
 
         # First try, need to perform more tests => Check for ' " ' at start and end (regex or not ?)
-        wrong_model = re.findall(r'''
+        wrong_pattern = re.findall(r'''
                                        ([^0-9\+\-\=\. *^xX])         # Catch wrong char
                                        |
                                        ([\-]\s*[^\d ]\s*)            # Delimit the usage of '-' (only figures)
@@ -116,12 +128,15 @@ if __name__ == '__main__':
                                        (\d*\.\d+\.\d+)               # Delimit the usage of '.' (catches '1.1.1')
                                     ''', in_put, re.VERBOSE)
 
-        if wrong_model:
-            error = check_wrong_model(wrong_model)
+        if wrong_pattern:
+            error = check_wrong_pattern(wrong_pattern)
 
-        elif global_model:
-            print(global_model)
-            error = parser(global_model)
+        elif global_pattern:
+            print(global_pattern)
+            error = parser(global_pattern)
+            if not error:
+                reduced_form = reducing_form(global_pattern)
+                # print(f'Reduced form : {}')
         else:
             print(f'It\'s like it\'s not working between me and you...\n\n'
                   f'"{in_put}"\n\n'
