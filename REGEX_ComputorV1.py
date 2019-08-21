@@ -3,58 +3,46 @@ import re
 
 
 # Need to reorganise according to err
-def def_errors_dict():
+def disp_errors_dict(err):
     dictionary = {
-        'char': f'Unexpected char, polynomial expression probably false\n',
-        'minus': f'Wrong usage of minus (" - "), polynomial expression probably false\n',
-        'plus': f'Wrong usage of plus (" + "), polynomial expression probably false\n',
-        'equal': f'Wrong usage of equal (" = "), polynomial expression probably false\n',
-        'multiplier': f'Wrong usage of multiplier (" * "), polynomial expression probably false\n',
-        'xX': f'Wrong usage of " x " or " X ", polynomial expression probably false\n',
-        'power': f'Wrong usage of power (" ^ "), polynomial expression probably false\n',
-        'dot_1': f'Wrong usage of decimal (" . "), polynomial expression probably false\n',
-        'dot_2': f'Wrong usage of decimal(" . "), polynomial expression probably false\n',
-        'deg>2': f'Polynomial degree is strictly greater than 2, can\'t solve\n'}
+        'unx': f'Polynomial expression probably false\n\n'
+               f'Unexpected \x1b[1;37;41m {err[1]} \x1b[0m\n\n',
+        'p_equal': f'Polynomial expression probably false\n\n'
+                   f'\x1b[1;37;41m {err[1]} \x1b[0m\n\n not at the end',
+        'n_equal': f'Polynomial expression probably false\n\n'
+                   f'Unexpected number of \x1b[1;37;41m {err[1]} \x1b[0m\n\n',
+        'deg>2': f'Polynomial degree is strictly greater than 2, can\'t solve\n\n'}
 
-    return dictionary
+    print(f'\n{dictionary[err[0]]}')
 
 
 def check_wrong_pattern(pattern):
-    err = ''
+    err_key = ''
+    err = []
     for wrong in pattern:
         for n, pat in enumerate(wrong):
             if pat:
-                if n == 0:
-                    err = 'char'
-                elif n == 1:
-                    err = 'minus'
-                elif n == 2:
-                    err = 'plus'
-                elif n == 3:
-                    err = 'equal'
-                elif n == 4:
-                    err = 'multiplier'
-                elif n == 5:
-                    err = 'xX'
-                elif n == 6:
+                if n == 6:
                     try:
                         if int(wrong[7]) and int(wrong[7]) > 2:
-                            err = 'deg>2'
+                            err_key = 'deg>2'
                         else:
-                            err = 'power'
+                            err_key = 'unx'
                     except ValueError:
-                        err = 'power'
-                elif n == 8:
-                    err = 'dot_1'
-                elif n == 9:
-                    err = 'dot_2'
+                        err_key = 'unx'
+                else:
+                    err_key = 'unx'
 
-        return err
+                err = pat
+                break
+
+        return err_key, err
 
 
 # Need to reorganise err
 def parser(pattern):
-    err = ''
+    err_key = ''
+    err = []
     max_ = 0
     equal = 0
     for exp in pattern:
@@ -63,13 +51,17 @@ def parser(pattern):
         if int(exp[3]) > max_:
             max_ = int(exp[3])
 
-    if not err and not pattern[-1][0] or equal > 1:
-        err = 'equal'
+    if not pattern[-1][0]:
+        err_key = 'p_equal'
+        err = '='
+    elif equal > 1:
+        err_key = 'n_equal'
+        err = '='
 
-    if max_ and not err:
+    if max_ and not err_key:
         print(f'Polynomial degree = {max_}')
 
-    return err
+    return err_key, err
 
 
 # Complex reduction atm, need to rethink it
@@ -94,9 +86,12 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             sys.exit(print('\nYou\'ll pay for that !'))
 
-        # Defines the error dictionary
         error = ''
-        display_err = def_errors_dict()
+
+        # Catches at start and/or end ' or " and replace it
+        in_put = re.sub(r'''(^[\"\']|[\"\']$)''', '', in_put, re.VERBOSE)
+
+        print(in_put)
 
         # Format must be "c*x^0 + b*x^1 + a*x^2 = "
         global_pattern = re.findall(r'''
@@ -107,7 +102,7 @@ if __name__ == '__main__':
                                       (\d+\.\d+|\d+)               # One or more number(s) (float or not) = coefficients
                                     ''', in_put, re.VERBOSE)
 
-        # First try, need to perform more tests => Check for ' " ' at start and end (regex or not ?)
+        # First try, need to perform more tests => Check for ' " '
         wrong_pattern = re.findall(r'''
                                        ([^0-9\+\-\=\. *^xX])         # Catch wrong char
                                        |
@@ -121,7 +116,7 @@ if __name__ == '__main__':
                                        |
                                        ([xX]\s*[^\^ \+\-\=]\s*)      # Delimit the usage of 'xX' (pow, signs, equal)
                                        |
-                                       ([\^]\s*([^ 0-2])\s*)         # Delimit the usage of '^' (only figures)
+                                       ([\^]\s*(\d\s*\.|[^ 0-2])\s*) # Delimit the usage of '^' (only int)
                                        |
                                        ([\.][^\d])                   # Delimit the usage of '.' (catches '..')
                                        |
@@ -134,7 +129,7 @@ if __name__ == '__main__':
         elif global_pattern:
             print(global_pattern)
             error = parser(global_pattern)
-            if not error:
+            if not error[0]:
                 reduced_form = reducing_form(global_pattern)
                 # print(f'Reduced form : {}')
         else:
@@ -142,5 +137,5 @@ if __name__ == '__main__':
                   f'"{in_put}"\n\n'
                   f'Really ?\n')
 
-        if error:
-            print(display_err[error])
+        if error[0]:
+            disp_errors_dict(error)
