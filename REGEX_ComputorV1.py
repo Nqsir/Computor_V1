@@ -8,7 +8,7 @@ def disp_errors_dict(err):
         'unx': f'Polynomial expression probably false\n\n'
                f'Unexpected \x1b[1;37;41m {err[1]} \x1b[0m\n\n',
         'p_equal': f'Polynomial expression probably false\n\n'
-                   f'\x1b[1;37;41m {err[1]} \x1b[0m\n\n not at the end',
+                   f'\x1b[1;37;41m {err[1]} \x1b[0m\n\n not associated to the last term or last term is false',
         'n_equal': f'Polynomial expression probably false\n\n'
                    f'Unexpected number of \x1b[1;37;41m {err[1]} \x1b[0m\n\n',
         'deg>2': f'Polynomial degree is strictly greater than 2, can\'t solve\n\n'}
@@ -66,17 +66,28 @@ def parser(pattern):
 
 # Complex reduction atm, need to rethink it
 def reducing_form(pattern):
-    res = []
-#     for n, pat in pattern:
-#         res.append(pat)
-#         if pat[3] == pattern[-1][3]:
-#             if pat[1] == '+' or not pat[1]:
-#                 if pattern[-1][1] == '+':
-#                     res[n][2] = abs(pat[2] - pattern[-1][2])
-#         if pat[0] is '=':
-#             break
-#
-    return res
+    reduced = []
+    for pat in pattern:
+        reduced.append(list(pat))
+        if pat[0] is '=':
+            break
+        elif pat[3] == pattern[-1][3]:
+            if pat[1] != pattern[-1][1]:
+                reduced[-1][2] = round(float(pat[2]) + float(pattern[-1][2]), 1)
+            else:
+                reduced[-1][2] = round(float(pat[2]) - float(pattern[-1][2]), 1)
+
+            if reduced[-1][2] < 0:
+                reduced[-1][1] = '-'
+                reduced[-1][2] = abs(reduced[-1][2])
+
+    reduced.__delitem__(-1)
+
+    res = ''
+    for r in reduced:
+        res += f' {r[1]} {r[2] if float(r[2]).is_integer() else float(r[2])} ^ {r[3]}'
+    print(f'Reduced form:{res} = 0')
+    return reduced
 
 
 if __name__ == '__main__':
@@ -86,12 +97,13 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             sys.exit(print('\nYou\'ll pay for that !'))
 
-        error = ''
+        error = ['', '']
+
+        if in_put.upper() == 'EXIT' or in_put.upper() == 'EXIT()':
+            sys.exit(print('\nYou\'ll pay for that !'))
 
         # Catches at start and/or end ' or " and replace it
         in_put = re.sub(r'''(^[\"\']|[\"\']$)''', '', in_put, re.VERBOSE)
-
-        print(in_put)
 
         # Format must be "c*x^0 + b*x^1 + a*x^2 = "
         global_pattern = re.findall(r'''
@@ -132,6 +144,7 @@ if __name__ == '__main__':
             if not error[0]:
                 reduced_form = reducing_form(global_pattern)
                 # print(f'Reduced form : {}')
+
         else:
             print(f'It\'s like it\'s not working between me and you...\n\n'
                   f'"{in_put}"\n\n'
