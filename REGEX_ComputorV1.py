@@ -2,6 +2,16 @@ import sys
 import re
 
 
+EQUAL = 0
+SIGN = 1
+NUMBER = 2
+POWER = 3
+
+OK = 0
+ERROR = 1
+INF = 2
+
+
 def dumb_func():
     print("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssyyyyyyyyyyyssssyyyyyyyyyyssssssssssssssssssyyyyyyyyyyyyyyyyyyyyyyyysyyyyysssssysssssssssssssssssssssssssssssssyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\n"
           "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssddddddddddddddddydddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddhhysssssshmddddddddddddddmmmmmmmmmmmmddmdmmmmmmmmdmmddddhhyysssssssyhmNNMMMMMMMMMMMMMNNmdhyysysysysssssysssssssssssssssssssssssssssssssyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\n"
@@ -157,8 +167,8 @@ def disp_errors_dict(err):
     dictionary = {
         'unx': f'Polynomial expression probably false\n\n'
                f'Unexpected \x1b[1;37;41m {err[1]} \x1b[0m\n\n',
-        'p_equal': f'Polynomial expression probably false\n\n'
-                   f'\x1b[1;37;41m {err[1]} \x1b[0m\n\n not associated to the last term or last term is false',
+        'sign': f'Polynomial expression probably false\n\n'
+                f'\x1b[1;37;41m {err[1]} \x1b[0m\n\n is missing before an expression\n\n',
         'n_equal': f'Polynomial expression probably false\n\n'
                    f'Unexpected number of \x1b[1;37;41m {err[1]} \x1b[0m\n\n',
         'deg>2': f'Polynomial degree is strictly greater than 2, can\'t solve\n\n'}
@@ -172,17 +182,7 @@ def check_wrong_pattern(pattern):
     for wrong in pattern:
         for n, pat in enumerate(wrong):
             if pat:
-                if n == 6:
-                    try:
-                        if int(wrong[7]) and int(wrong[7]) > 2:
-                            err_key = 'deg>2'
-                        else:
-                            err_key = 'unx'
-                    except ValueError:
-                        err_key = 'unx'
-                else:
-                    err_key = 'unx'
-
+                err_key = 'unx'
                 err = pat
                 break
 
@@ -192,47 +192,115 @@ def check_wrong_pattern(pattern):
 def parser(pattern):
     err_key = ''
     err = []
-    equal = 0
-    for exp in pattern:
-        if '=' in exp:
-            equal += 1
+    equal_nbr = 0
+    for e, exp in enumerate(pattern):
+        if exp[EQUAL] == '=':
+            equal_nbr += 1
+        else:
+            if not exp[SIGN] and e != 0:
+                err_key = 'sign'
+                err = '+ or -'
 
-    if not pattern[-1][0]:
-        err_key = 'p_equal'
-        err = '='
-    elif equal > 1:
+    if not equal_nbr or equal_nbr > 1:
         err_key = 'n_equal'
         err = '='
 
     return err_key, err
 
 
-def reducing_form(pattern):
-    reduced = []
-    for pat in pattern:
-        reduced.append(list(pat))
-        if pat[0] is '=':
-            break
-        elif pat[3] == pattern[-1][3]:
-            if pat[1] == pattern[-1][1] or \
-                    ((pat[1] == "" or pat[1] == "+") and (pattern[-1][1] == "" or pattern[-1][1] == "+")):
-                reduced[-1][2] = round(float(pat[2]) - float(pattern[-1][2]), 1)
+def reducing_form(g_pattern):
+    equal = 0
+    pattern = []
+    for p in g_pattern:
+        p = list(p)
+        if p[EQUAL] == '=':
+            equal = 1
+        if equal:
+            p[EQUAL] = ''
+            if p[SIGN] == '-':
+                p[SIGN] = '+'
             else:
-                reduced[-1][2] = round(float(pat[2]) + float(pattern[-1][2]), 1)
+                p[SIGN] = '-'
+        pattern.append(p)
 
-            if reduced[-1][2] < 0:
-                reduced[-1][1] = '-'
-                reduced[-1][2] = abs(reduced[-1][2])
+    for e_1, p_1 in enumerate(pattern):
+        for e_2, p_2 in enumerate(pattern):
+            if e_1 != e_2:
+                if p_1[POWER] == p_2[POWER]:
+                    if (p_1[SIGN] == '-' and p_2[SIGN] != '-') or (p_2[SIGN] == '-' and p_1[SIGN] != '-'):
+                        p_1[NUMBER] = round(float(p_1[NUMBER]) - float(p_2[NUMBER]), 1)
+                    else:
+                        p_1[NUMBER] = round(float(p_1[NUMBER]) + float(p_2[NUMBER]), 1)
 
-    reduced.__delitem__(-1)
+                    if p_1[NUMBER] < 0:
+                        p_1[SIGN] = '-'
+                        p_1[NUMBER] = abs(p_1[NUMBER])
+                    pattern.__delitem__(e_2)
+            else:
+                pass
 
+    print(f'pattern = {pattern}')
+    pattern.sort(key=lambda x: x[POWER])
+    print(f'pattern = {pattern}')
+
+    # pattern = [list(pat) for pat in g_pattern]
+    # print(pattern)
+    # for exp_pat in pattern:
+    #     if exp_pat[EQUAL]:
+    #         equal = 1
+    #     if not equal:
+    #         reduced.append(exp_pat)
+    #     else:
+    #         exp_in = 0
+    #         for exp_red in reduced:
+    #             if exp_pat[POWER] == exp_red[POWER]:
+    #                 exp_in = 1
+    #                 if exp_pat[SIGN] == exp_red[SIGN] or ((exp_pat[SIGN] == "" or exp_pat[SIGN] == "+")
+    #                                                       and (exp_red[SIGN] == "" or exp_red[SIGN] == "+")):
+    #                     exp_red[NUMBER] = round(float(exp_red[NUMBER]) - float(exp_pat[NUMBER]), 1)
+    #                 else:
+    #                     exp_red[NUMBER] = round(float(exp_red[NUMBER]) + float(exp_pat[NUMBER]), 1)
+    #
+    #                 if exp_red[NUMBER] < 0:
+    #                     exp_red[SIGN] = '-'
+    #                     exp_red[NUMBER] = abs(exp_red[NUMBER])
+    #
+    #         if not exp_in:
+    #             if exp_pat[SIGN] == '-':
+    #                 exp_pat[SIGN] = '+'
+    #             else:
+    #                 exp_pat[SIGN] = '-'
+    #             reduced.append(list(exp_pat))
+
+
+        # print(pat)
+        # if pat[3] == pattern[-1][3]:
+        #     if pat[1] == pattern[-1][1] or \
+        #             ((pat[1] == "" or pat[1] == "+") and (pattern[-1][1] == "" or pattern[-1][1] == "+")):
+        #         reduced[-1][2] = round(float(pat[2]) - float(pattern[-1][2]), 1)
+        #     else:
+        #         reduced[-1][2] = round(float(pat[2]) + float(pattern[-1][2]), 1)
+        #
+        #     if reduced[-1][2] < 0:
+        #         reduced[-1][1] = '-'
+        #         reduced[-1][2] = abs(reduced[-1][2])
+
+    # reduced.__delitem__(-1)
+
+    # print(f'reduced = {reduced}')
+    #
+    print(f'Polynomial degree = {pattern[-1][POWER]}')
+    if int(pattern[-1][POWER]) > 2:
+        return ERROR, pattern
     res = ''
-    for n, r in enumerate(reduced):
-        res += f' {r[1] if (n != 0 or r[1] != "+") else ""}' \
-               f' {int(r[2]) if float(r[2]).is_integer() else float(r[2])} * X^{r[3]}'
+    for n, r in enumerate(pattern):
+        if float(r[NUMBER]) > 0:
+            res += f' {r[SIGN] if (n != 0 or r[SIGN] != "+") else ""}' \
+                   f' {int(r[NUMBER]) if float(r[NUMBER]).is_integer() else float(r[NUMBER])} * X^{r[POWER]}'
+    if not res:
+        return INF, pattern
     print(f'Reduced form:{res} = 0')
-    print(f'Polynomial degree: {reduced[-1][3]}')
-    return reduced
+    return OK, pattern
 
 
 def delta_calc(reduced):
@@ -278,7 +346,7 @@ if __name__ == '__main__':
                                        |
                                        ([xX]\s*[^\^ \+\-\=]\s*)      # Delimit the usage of 'xX' (pow, signs, equal)
                                        |
-                                       ([\^]\s*(\d\s*\.|[^ 0-2])\s*) # Delimit the usage of '^' (only int)
+                                       ([\^]\s*(\d\s*\.|[^ \d])\s*)  # Delimit the usage of '^' (only int)
                                        |
                                        ([\.][^\d])                   # Delimit the usage of '.' (catches '..')
                                        |
@@ -293,11 +361,12 @@ if __name__ == '__main__':
             error = parser(global_pattern)
             if not error[0]:
                 reduced_form = reducing_form(global_pattern)
-                if len(reduced_form) > 1:
+                if reduced_form[0] == ERROR:
+                    error = 'deg>2'
+                elif reduced_form[0] == OK:
                     delta = delta_calc(reduced_form)
                 else:
-                    if reduced_form[0][2] == 0:
-                        dumb_func()
+                    dumb_func()
 
         else:
             print(f'It\'s like it\'s not working between me and you...\n\n'
