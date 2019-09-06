@@ -259,7 +259,7 @@ def reducing_form(g_pattern):
 
 def delta_calc(reduced):
     print('Flu')
-    return 'teub'
+    return 'Flu'
 
 
 if __name__ == '__main__':
