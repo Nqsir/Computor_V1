@@ -213,6 +213,8 @@ def reducing_form(g_pattern):
     pattern = []
     for p in g_pattern:
         p = list(p)
+        p[NUMBER] = round(float(p[NUMBER]), 1)
+        p[POWER] = int(p[POWER])
         if p[EQUAL] == '=':
             equal = 1
         if equal:
@@ -223,42 +225,94 @@ def reducing_form(g_pattern):
                 p[SIGN] = '-'
         pattern.append(p)
 
+    print(f'pattern = {pattern}')
+
     for e_1, p_1 in enumerate(pattern):
         for e_2, p_2 in enumerate(pattern):
             if e_1 != e_2:
                 if p_1[POWER] == p_2[POWER]:
                     if (p_1[SIGN] == '-' and p_2[SIGN] != '-') or (p_2[SIGN] == '-' and p_1[SIGN] != '-'):
-                        p_1[NUMBER] = round(float(p_1[NUMBER]) - float(p_2[NUMBER]), 1)
+                        p_1[NUMBER] = p_1[NUMBER] - p_2[NUMBER]
                     else:
-                        p_1[NUMBER] = round(float(p_1[NUMBER]) + float(p_2[NUMBER]), 1)
+                        p_1[NUMBER] = p_1[NUMBER] + p_2[NUMBER]
 
                     if p_1[NUMBER] < 0:
                         p_1[SIGN] = '-'
                         p_1[NUMBER] = abs(p_1[NUMBER])
+
                     pattern.__delitem__(e_2)
-            else:
-                pass
 
     pattern.sort(key=lambda x: x[POWER])
 
     print(f'Polynomial degree = {pattern[-1][POWER]}')
 
-    if int(pattern[-1][POWER]) > 2:
+    if pattern[-1][POWER] > 2:
         return ERROR, pattern
 
-    res = ''
+    res_str = ''
+    res_lst = []
+    print(f'pattern = {pattern}')
     for n, r in enumerate(pattern):
-        if float(r[NUMBER]) > 0:
-            res += f' {r[SIGN] if (n != 0 or r[SIGN] != "+") else ""}' \
-                   f' {int(r[NUMBER]) if float(r[NUMBER]).is_integer() else float(r[NUMBER])} * X^{r[POWER]}'
-    if not res:
-        return INF, pattern
-    print(f'Reduced form:{res} = 0')
-    return OK, pattern
+        if r[NUMBER] > 0:
+            res_str += f' {r[SIGN] if (n != 0 or r[SIGN] != "+") else ""}' \
+                       f' {int(r[NUMBER]) if r[NUMBER].is_integer() else r[NUMBER]} * X^{r[POWER]}'
+            res_lst.append(r)
+
+    if not res_str:
+        return INF, res_lst
+    print(f'Reduced form:{res_str} = 0')
+    return OK, res_lst
+
+
+def gcd(a, b):
+    """
+    Greater Common Divisor
+    :param a: Int
+    :param b: Int
+    :return: Int
+    """
+    while b:
+        a, b = b, a % b
+    return a
 
 
 def delta_calc(reduced):
-    print('Flu')
+    print(f'reduced = {reduced}')
+    if reduced[-1][POWER] == 0:
+        exp_0 = reduced[0]
+        print(f'Result is '
+              f'{exp_0[NUMBER] if exp_0[NUMBER].is_integer() else exp_0[NUMBER]}')
+    elif reduced[-1][POWER] == 1:
+        exp_0 = reduced[0]
+        exp_1 = reduced[1]
+        if (exp_0[SIGN] == '-' and exp_1[SIGN] != '-') or (exp_0[SIGN] != '-' and exp_1[SIGN] == '-'):
+            sign = '+'
+        else:
+            sign = '-'
+        if (exp_0[NUMBER] / exp_1[NUMBER]).is_integer():
+            number = int(exp_0[NUMBER] / exp_1[NUMBER])
+        else:
+            if not exp_0[NUMBER].is_integer():
+                num_1 = round(int(exp_0[NUMBER] * 10), 1)
+            else:
+                num_1 = int(exp_0[NUMBER])
+            if not exp_1[NUMBER].is_integer():
+                num_2 = round(int(exp_1[NUMBER] * 10), 1)
+            else:
+                num_2 = int(exp_1[NUMBER])
+
+            print(f'num_1 = {num_1}')
+            print(f'num_2 = {num_2}')
+            res_gcd = gcd((num_1 + num_2), (num_1 * num_2))
+            num_1 = int(num_1 / res_gcd)
+            num_2 = int(num_2 / res_gcd)
+            print(f'res_gcd = {res_gcd}')
+            print(f'num_1 = {num_1}')
+            print(f'num_2 = {num_2}')
+            number = 0
+        print(f'Result is {sign if sign != "+" else "" } '
+              f'{number if number != 0 else f"{num_1} / {num_2}"}')
+
     return 'Flu'
 
 
@@ -318,7 +372,7 @@ if __name__ == '__main__':
                 if reduced_form[0] == ERROR:
                     error = ('deg>2', '')
                 elif reduced_form[0] == OK:
-                    delta = delta_calc(reduced_form)
+                    delta = delta_calc(reduced_form[1])
                 else:
                     dumb_func()
 
