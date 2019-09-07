@@ -292,6 +292,7 @@ def delta_calc(reduced):
         if (exp_0[NUMBER] / exp_1[NUMBER]).is_integer():
             number = int(exp_0[NUMBER] / exp_1[NUMBER])
         else:
+            number = 0
             if not exp_0[NUMBER].is_integer():
                 num_1 = round(int(exp_0[NUMBER] * 10), 1)
             else:
@@ -301,19 +302,16 @@ def delta_calc(reduced):
             else:
                 num_2 = int(exp_1[NUMBER])
 
-            print(f'num_1 = {num_1}')
-            print(f'num_2 = {num_2}')
             res_gcd = gcd((num_1 + num_2), (num_1 * num_2))
             num_1 = int(num_1 / res_gcd)
             num_2 = int(num_2 / res_gcd)
-            print(f'res_gcd = {res_gcd}')
-            print(f'num_1 = {num_1}')
-            print(f'num_2 = {num_2}')
-            number = 0
         print(f'Result is {sign if sign != "+" else "" } '
               f'{number if number != 0 else f"{num_1} / {num_2}"}')
 
-    return 'Flu'
+    # Last thing to do
+    elif reduced[-1][POWER] == 2:
+        pass
+
 
 
 if __name__ == '__main__':
@@ -328,7 +326,7 @@ if __name__ == '__main__':
         if in_put.upper() == 'EXIT' or in_put.upper() == 'EXIT()':
             sys.exit(print('\nYou\'ll pay for that !'))
 
-        # Catches at start and/or end ' or " and replace it
+        # Catches at start and/or end ' or " to del
         in_put = re.sub(r'''(^[\"\']|[\"\']$)''', '', in_put, re.VERBOSE)
 
         # Format must be "c*x^0 + b*x^1 + a*x^2 = "
@@ -340,7 +338,6 @@ if __name__ == '__main__':
                                       (\d+\.\d+|\d+)               # One or more number(s) (float or not) = coefficients
                                     ''', in_put, re.VERBOSE)
 
-        # First try, need to perform more tests => Check for ' " '
         wrong_pattern = re.findall(r'''
                                        ([^0-9\+\-\=\. *^xX])         # Catch wrong char
                                        |
@@ -372,7 +369,7 @@ if __name__ == '__main__':
                 if reduced_form[0] == ERROR:
                     error = ('deg>2', '')
                 elif reduced_form[0] == OK:
-                    delta = delta_calc(reduced_form[1])
+                    delta_calc(reduced_form[1])
                 else:
                     dumb_func()
 
