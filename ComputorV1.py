@@ -308,7 +308,7 @@ def discriminant_calc(reduced):
         reduced.__delitem__(1)
 
     if reduced[-1][POWER] == 0:
-        print(f'\nDid my best here... ¯\_(ツ)_/¯\n')
+        print(f'\n\x1b[4;33mDid my best here... ¯\_(ツ)_/¯ \x1b[0m \n')
     elif reduced[-1][POWER] == 1:
         exp_1 = reduced[1]
         if (exp_0[SIGN] == '-' and exp_1[SIGN] != '-') or (exp_0[SIGN] != '-' and exp_1[SIGN] == '-'):
@@ -321,21 +321,10 @@ def discriminant_calc(reduced):
             number = -1
             logger.debug(f'\n/*/-------\nTrying to make Egyptian fraction with {exp_0[NUMBER]}'
                          f' and {exp_1[NUMBER]}\n/*/-------\n')
-            # if not exp_0[NUMBER].is_integer():
-            #     num_1 = round(int(exp_0[NUMBER] * 10), 1)
-            # else:
-            #     num_1 = int(exp_0[NUMBER]) * 10
-            # if not exp_1[NUMBER].is_integer():
-            #     num_2 = round(int(exp_1[NUMBER] * 10), 1)
-            # else:
-            #     num_2 = int(exp_1[NUMBER]) * 10
             num_1 = int(round(exp_0[NUMBER], 1) * 10)
             num_2 = int(round(exp_1[NUMBER], 1) * 10)
 
             if num_2 != 10 or not (num_1 / 10).is_integer():
-                print(num_1)
-                print(num_2)
-                # res_gcd = gcd((num_1 + num_2), (num_1 * num_2))
                 res_gcd = gcd(num_1, num_2)
                 logger.debug(f'\n/*/-------\nEuclidean algorithm with GDC {res_gcd}\n/*/-------\n')
                 num_1 = int(num_1 / res_gcd)
@@ -354,9 +343,11 @@ def discriminant_calc(reduced):
         delta = (exp_1[NUMBER] * exp_1[NUMBER]) - (exp_0[NUMBER] * exp_2[NUMBER] * 4)
         logger.debug(f'\n/*/-------\nDiscriminant = {delta}\n/*/-------\n')
         if delta > 0:
-            print(f'Discriminant is strictly positive, the two solutions are:')
+            print(f'Discriminant is strictly positive, the two solutions are:\n'
+                  f'\x1b[1;30;42m{-(exp_1[NUMBER] - delta**0.5) / exp_2[NUMBER] * 2: .4f} \x1b[0m\n\n'
+                  f'\x1b[1;30;42m{-(exp_1[NUMBER] + delta**0.5) / exp_2[NUMBER] * 2: .4f} \x1b[0m\n\n')
         elif delta < 0:
-            print(f'Discriminant is strictly negative, the only solution is:')
+            print(f'Discriminant is strictly negative, the two solutions are:\n')
         else:
             print(f'Discriminant is 0, the only solution is \x1b[1;30;42m 0 \x1b[0m\n')
         pass
