@@ -236,9 +236,6 @@ def formatting(g_pattern):
     return formatted_pattern
 
 
-# ---------------------- SUPA CHANGE // Changing and signs and stuff like that way too complicated
-
-
 def reducing_form(g_pattern):
     pattern = formatting(g_pattern)
 
@@ -264,8 +261,6 @@ def reducing_form(g_pattern):
                        f' {int(r[NUMBER]) if r[NUMBER].is_integer() else r[NUMBER]} * X^{r[POWER]}'
             res_lst.append(r)
 
-    pow_ = 0
-
     if not res_str:
         return INF, res_lst
 
@@ -274,6 +269,7 @@ def reducing_form(g_pattern):
     if res_lst[-1][POWER] > 2:
         return ERROR, 'deg', res_lst[-1][POWER]
 
+    pow_ = 0
     for exp in pattern:
         if exp[POWER] > pow_:
             return ERROR, 'pow', pow_
@@ -324,11 +320,10 @@ def discriminant_calc(reduced):
 
         print(f'\nResult is \x1b[1;30;42m {number if number else f"{num_1} / {num_2}"} \x1b[0m\n')
 
-    # Last thing to do
     elif reduced[-1][POWER] == 2:
         exp_1 = reduced[1]
         exp_2 = reduced[2]
-        # Problem with the sign according to the equation
+
         delta = (exp_1[NUMBER] * exp_1[NUMBER]) - (exp_0[NUMBER] * exp_2[NUMBER] * 4)
         logger.debug(f'\n/*/-------\nDiscriminant = {int(delta) if delta.is_integer() else delta}\n/*/-------\n')
         if delta > 0:
@@ -366,8 +361,7 @@ if __name__ == '__main__':
 
     while True:
         try:
-            # in_put = input('\x1b[5;30;47mPlease enter your polynomial expression :\x1b[0m ')
-            in_put = input('Please enter your polynomial expression : ')
+            in_put = input('\x1b[5;30;47mPlease enter your polynomial expression :\x1b[0m ')
         except KeyboardInterrupt:
             sys.exit(print('\nYou\'ll pay for that !'))
 
@@ -376,10 +370,8 @@ if __name__ == '__main__':
         if in_put.upper() == 'EXIT' or in_put.upper() == 'EXIT()':
             sys.exit(print('\nYou\'ll pay for that !'))
 
-        # Catches at start and/or end ' or " to del
         in_put = re.sub(r'''(^\s*[\"\']|[\"\']\s*$)''', '', in_put, re.VERBOSE)
 
-        # Format must be "c*x^0 + b*x^1 + a*x^2 = "
         global_pattern = re.findall(r'''
                                       (\=)?\s*                     # Equal if there's one
                                       ([\+\-])?\s*                 # Sign if there's one
