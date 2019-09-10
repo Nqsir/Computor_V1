@@ -220,19 +220,23 @@ def formatting(g_pattern):
         p = list(p)
         p[NUMBER] = round(float(p[NUMBER]), 1)
         p[POWER] = int(p[POWER])
-        if p[SIGN] == '':
-            p[SIGN] = '+'
         if p[EQUAL] == '=':
             equal = 1
         if equal:
             p[EQUAL] = ''
-            if p[SIGN] == '-':
-                p[SIGN] = '+'
-            else:
+            if p[SIGN] != '-':
                 p[SIGN] = '-'
+            else:
+                p[SIGN] = ''
+        if p[SIGN] == '-':
+            p[NUMBER] = -(p[NUMBER])
+        p[SIGN] = ''
         formatted_pattern.append(p)
 
     return formatted_pattern
+
+
+# ---------------------- SUPA CHANGE // Changing and signs and stuff like that way too complicated
 
 
 def reducing_form(g_pattern):
@@ -244,14 +248,7 @@ def reducing_form(g_pattern):
         for e_2, p_2 in enumerate(pattern):
             if e_1 != e_2:
                 if p_1[POWER] == p_2[POWER]:
-                    if (p_1[SIGN] == '-' and p_2[SIGN] != '-') or (p_2[SIGN] == '-' and p_1[SIGN] != '-'):
-                        p_1[NUMBER] = p_1[NUMBER] - p_2[NUMBER]
-                    else:
-                        p_1[NUMBER] = p_1[NUMBER] + p_2[NUMBER]
-
-                    if p_1[NUMBER] < 0:
-                        p_1[SIGN] = '-'
-                        p_1[NUMBER] = abs(p_1[NUMBER])
+                    p_1[NUMBER] = p_1[NUMBER] + p_2[NUMBER]
 
                     pattern.__delitem__(e_2)
 
@@ -262,8 +259,8 @@ def reducing_form(g_pattern):
     res_str = ''
     res_lst = []
     for n, r in enumerate(pattern):
-        if r[NUMBER] > 0:
-            res_str += f' {r[SIGN] if (n != 0 or r[SIGN] != "+") else ""}' \
+        if r[NUMBER] != 0:
+            res_str += f' {"+" if r[NUMBER] > 0 and n != 0 else ""}' \
                        f' {int(r[NUMBER]) if r[NUMBER].is_integer() else r[NUMBER]} * X^{r[POWER]}'
             res_lst.append(r)
 
@@ -311,45 +308,44 @@ def discriminant_calc(reduced):
         print(f'\n\x1b[4;33mDid my best here... ¯\_(ツ)_/¯ \x1b[0m \n')
     elif reduced[-1][POWER] == 1:
         exp_1 = reduced[1]
-        if (exp_0[SIGN] == '-' and exp_1[SIGN] != '-') or (exp_0[SIGN] != '-' and exp_1[SIGN] == '-'):
-            sign = '+'
-        else:
-            sign = '-'
+        number = 0
         if (exp_0[NUMBER] / exp_1[NUMBER]).is_integer():
-            number = int(exp_0[NUMBER] / exp_1[NUMBER])
+            number = int(-exp_0[NUMBER] / exp_1[NUMBER])
         else:
-            number = -1
             logger.debug(f'\n/*/-------\nTrying to make Egyptian fraction with {exp_0[NUMBER]}'
                          f' and {exp_1[NUMBER]}\n/*/-------\n')
-            num_1 = int(round(exp_0[NUMBER], 1) * 10)
+            num_1 = -int(round(exp_0[NUMBER], 1) * 10)
             num_2 = int(round(exp_1[NUMBER], 1) * 10)
 
-            if num_2 != 10 or not (num_1 / 10).is_integer():
-                res_gcd = gcd(num_1, num_2)
-                logger.debug(f'\n/*/-------\nEuclidean algorithm with GDC {res_gcd}\n/*/-------\n')
-                num_1 = int(num_1 / res_gcd)
-                num_2 = int(num_2 / res_gcd)
-            else:
-                number = num_1 / 10
+            res_gcd = gcd(num_1, num_2)
+            logger.debug(f'\n/*/-------\nEuclidean algorithm with GDC {res_gcd}\n/*/-------\n')
+            num_1 = int(num_1 / res_gcd)
+            num_2 = int(num_2 / res_gcd)
 
-        print(f'\nResult is \x1b[1;30;42m{sign if sign != "+" and number != 0 else "" } '
-              f'{number if number >= 0 else f"{num_1} / {num_2}"} \x1b[0m\n')
+        print(f'\nResult is \x1b[1;30;42m {number if number else f"{num_1} / {num_2}"} \x1b[0m\n')
 
     # Last thing to do
     elif reduced[-1][POWER] == 2:
-        print('That\'s the spot !')
         exp_1 = reduced[1]
         exp_2 = reduced[2]
+        # Problem with the sign according to the equation
         delta = (exp_1[NUMBER] * exp_1[NUMBER]) - (exp_0[NUMBER] * exp_2[NUMBER] * 4)
-        logger.debug(f'\n/*/-------\nDiscriminant = {delta}\n/*/-------\n')
+        logger.debug(f'\n/*/-------\nDiscriminant = {int(delta) if delta.is_integer() else delta}\n/*/-------\n')
         if delta > 0:
             print(f'Discriminant is strictly positive, the two solutions are:\n'
-                  f'\x1b[1;30;42m{-(exp_1[NUMBER] - delta**0.5) / exp_2[NUMBER] * 2: .4f} \x1b[0m\n\n'
-                  f'\x1b[1;30;42m{-(exp_1[NUMBER] + delta**0.5) / exp_2[NUMBER] * 2: .4f} \x1b[0m\n\n')
+                  f'\x1b[1;30;42m{(-exp_1[NUMBER] - delta**0.5) / (exp_2[NUMBER] * 2): .4f} \x1b[0m\n\n'
+                  f'\x1b[1;30;42m{(-exp_1[NUMBER] + delta**0.5) / (exp_2[NUMBER] * 2): .4f} \x1b[0m\n\n')
         elif delta < 0:
-            print(f'Discriminant is strictly negative, the two solutions are:\n')
+            print(f'Discriminant is strictly negative, the two solutions are:\n'
+                  f'\x1b[1;30;42m({int(-exp_1[NUMBER]) if exp_1[NUMBER].is_integer() else exp_1[NUMBER]}'
+                  f' - i * √{delta: .2f}) / '
+                  f'{int(exp_2[NUMBER] * 2) if (exp_2[NUMBER] * 2).is_integer() else exp_1[NUMBER]} \x1b[0m\n\n'
+                  f'\x1b[1;30;42m({int(-exp_1[NUMBER]) if exp_1[NUMBER].is_integer() else exp_1[NUMBER]}'
+                  f' + i * √{delta: .2f}) / '
+                  f'{int(exp_2[NUMBER] * 2) if (exp_2[NUMBER] * 2).is_integer() else exp_1[NUMBER]} \x1b[0m\n\n')
         else:
-            print(f'Discriminant is 0, the only solution is \x1b[1;30;42m 0 \x1b[0m\n')
+            print(f'Discriminant is zero, the only solution is \x1b[1;30;42m '
+                  f'{-exp_1[NUMBER] / (exp_2[NUMBER] * 2)} \x1b[0m\n')
         pass
 
 
