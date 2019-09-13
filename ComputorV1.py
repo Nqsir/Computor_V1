@@ -375,7 +375,7 @@ if __name__ == '__main__':
         global_pattern = re.findall(r'''
                                       (\=)?\s*                     # Equal if there's one
                                       ([\+\-])?\s*                 # Sign if there's one
-                                      (\d+.\d+|\d+)                # One or more number(s) (float or not) = variables
+                                      (\d+\.\d+|\d+)               # One or more number(s) (float or not) = variables
                                       \s*\*\s*[xX]\s*[\^]\s*       # spaces '*' spaces 'x' or 'X' spaces '^' spaces
                                       (\d+\.\d+|\d+)               # One or more number(s) (float or not) = coefficients
                                     ''', in_put, re.VERBOSE)
@@ -399,6 +399,22 @@ if __name__ == '__main__':
                                        |
                                        (\d*\.\d+\.\d+)               # Delimit the usage of '.' (catches '1.1.1')
                                     ''', in_put, re.VERBOSE)
+
+        test = in_put.replace(' ', '')
+
+        for pat in global_pattern:
+            for p in pat:
+                if p in test:
+                    test = test.replace(p, '', 1)
+            test = test.replace('*X^', '', 1)
+
+        #
+        #
+        #
+        # Implement if test == wrong char or pattern
+        #
+        #
+        #
 
         if wrong_pattern:
             error = check_wrong_pattern(wrong_pattern)
