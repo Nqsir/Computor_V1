@@ -2,7 +2,7 @@
 
 Simple Polynomial equation solver (degree 2 max.)
 
-Example: ```py Computor_v1```
+Example: ```py ComputorV1.py```
 
 
 ```Please enter your polynomial expression : 5 * X^0 + 4 * X^1 - 9.3 * X^2 = 1 * X^0```
@@ -16,7 +16,7 @@ Discriminant is strictly positive, the two solutions are:
 ```
 
 
-Example: ```py Computor_v1 -d``` for detailed mode
+Example: ```py ComputorV1.py -d``` for detailed mode
 
 ```Please enter your polynomial expression : 5 * X^1 - 9.3 * X^2 = 1 * X^0```
 ```
