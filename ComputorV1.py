@@ -242,12 +242,14 @@ def reducing_form(g_pattern):
     logger.debug(f'\n/*/-------\nPrepared pattern to simplify {pattern}\n/*/-------\n')
 
     for e_1, p_1 in enumerate(pattern):
-        for e_2, p_2 in enumerate(pattern):
-            if e_1 != e_2:
-                if p_1[POWER] == p_2[POWER]:
-                    p_1[NUMBER] = p_1[NUMBER] + p_2[NUMBER]
-
-                    pattern.__delitem__(e_2)
+        if p_1[NUMBER] == 0:
+            pattern.pop(e_1)
+        else:
+            for e_2, p_2 in enumerate(pattern):
+                if e_1 != e_2:
+                    if p_1[POWER] == p_2[POWER]:
+                        p_1[NUMBER] = p_1[NUMBER] + p_2[NUMBER]
+                        pattern.pop(e_2)
 
     pattern.sort(key=lambda x: x[POWER])
 
