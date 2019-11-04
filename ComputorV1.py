@@ -328,7 +328,7 @@ def discriminant_calc(reduced):
         exp_2 = reduced[2]
 
         delta = (exp_1[NUMBER] * exp_1[NUMBER]) - (exp_0[NUMBER] * exp_2[NUMBER] * 4)
-        logger.debug(f'\n/*/-------\nDiscriminant = {int(delta) if delta.is_integer() else delta}\n/*/-------\n')
+        logger.debug(f'\n/*/-------\nDiscriminant = {int(delta) if delta.is_integer() else delta:.4f}\n/*/-------\n')
         if delta > 0:
             print(f'Discriminant is strictly positive, the two solutions are:\n'
                   f'\x1b[1;30;42m({int(-exp_1[NUMBER]) if exp_1[NUMBER].is_integer() else exp_1[NUMBER]}'
