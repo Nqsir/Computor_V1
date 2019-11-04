@@ -180,17 +180,14 @@ def disp_errors_dict(err):
     print(f'\n{dictionary[err[0]]}')
 
 
-def check_wrong_pattern(pattern):
-    err_key = ''
-    err = []
+def check_wrong_pattern(pattern, test_):
     for wrong in pattern:
         for n, pat in enumerate(wrong):
             if pat:
-                err_key = 'unx'
-                err = pat
-                break
+                return 'unx', pat
 
-        return err_key, err
+    if test_:
+        return 'unx', test_
 
 
 def parsing(pattern):
@@ -303,11 +300,15 @@ def discriminant_calc(reduced):
         reduced.__delitem__(1)
 
     if reduced[-1][POWER] == 0:
-        print(f'\n\x1b[4;33mDid my best here... ¯\_(ツ)_/¯ \x1b[0m \n')
+        print(f'\n\x1b[4;33mNo solution, I swear I did my best here... ¯\_(ツ)_/¯ \x1b[0m \n')
     elif reduced[-1][POWER] == 1:
         exp_1 = reduced[1]
         number = 0
-        if (exp_0[NUMBER] / exp_1[NUMBER]).is_integer():
+        num = 0
+        if exp_0[NUMBER] == 0:
+            num = 1
+        elif (exp_0[NUMBER] / exp_1[NUMBER]).is_integer():
+            num = 1
             number = int(-exp_0[NUMBER] / exp_1[NUMBER])
         else:
             logger.debug(f'\n/*/-------\nTrying to make Egyptian fraction with {exp_0[NUMBER]}'
@@ -320,7 +321,7 @@ def discriminant_calc(reduced):
             num_1 = int(num_1 / res_gcd)
             num_2 = int(num_2 / res_gcd)
 
-        print(f'\nResult is \x1b[1;30;42m {number if number else f"{num_1} / {num_2}"} \x1b[0m\n')
+        print(f'\nResult is \x1b[1;30;42m {number if num else f"{num_1} / {num_2}"} \x1b[0m\n')
 
     elif reduced[-1][POWER] == 2:
         exp_1 = reduced[1]
@@ -330,8 +331,12 @@ def discriminant_calc(reduced):
         logger.debug(f'\n/*/-------\nDiscriminant = {int(delta) if delta.is_integer() else delta}\n/*/-------\n')
         if delta > 0:
             print(f'Discriminant is strictly positive, the two solutions are:\n'
-                  f'\x1b[1;30;42m{(-exp_1[NUMBER] - delta**0.5) / (exp_2[NUMBER] * 2): .4f} \x1b[0m\n\n'
-                  f'\x1b[1;30;42m{(-exp_1[NUMBER] + delta**0.5) / (exp_2[NUMBER] * 2): .4f} \x1b[0m\n\n')
+                  f'\x1b[1;30;42m({int(-exp_1[NUMBER]) if exp_1[NUMBER].is_integer() else exp_1[NUMBER]}'
+                  f' - √{delta: .2f}) / '
+                  f'{int(exp_2[NUMBER] * 2) if (exp_2[NUMBER] * 2).is_integer() else exp_1[NUMBER]} \x1b[0m\n\n'
+                  f'\x1b[1;30;42m({int(-exp_1[NUMBER]) if exp_1[NUMBER].is_integer() else exp_1[NUMBER]}'
+                  f' + √{delta: .2f}) / '
+                  f'{int(exp_2[NUMBER] * 2) if (exp_2[NUMBER] * 2).is_integer() else exp_1[NUMBER]} \x1b[0m\n\n')
         elif delta < 0:
             print(f'Discriminant is strictly negative, the two solutions are:\n'
                   f'\x1b[1;30;42m({int(-exp_1[NUMBER]) if exp_1[NUMBER].is_integer() else exp_1[NUMBER]}'
@@ -410,16 +415,8 @@ if __name__ == '__main__':
                     test = test.replace(p, '', 1)
             test = test.replace('*X^', '', 1)
 
-        #
-        #
-        #
-        # Implement if test == wrong char or pattern
-        #
-        #
-        #
-
-        if wrong_pattern:
-            error = check_wrong_pattern(wrong_pattern)
+        if wrong_pattern or test:
+            error = check_wrong_pattern(wrong_pattern, test)
 
         elif global_pattern:
             logger.debug(f'\n/*/-------\nPattern catched {global_pattern}\n/*/-------\n')
